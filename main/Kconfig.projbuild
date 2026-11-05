@@ -1,0 +1,28 @@
+menu "BLE USB Dongle"
+
+    config DONGLE_USB_VID
+        hex "USB vendor ID"
+        default 0x303A
+
+    config DONGLE_USB_PID
+        hex "USB product ID"
+        default 0x4B42
+
+    config DONGLE_LOG_HCI_DECODE
+        bool "Log decoded HCI commands/events/ACL headers"
+        default y
+
+    config DONGLE_LOG_HCI_HEX
+        bool "Log raw HCI packet hex dumps (very verbose)"
+        default y
+
+    config DONGLE_LOG_HEX_MAX_BYTES
+        int "Maximum bytes per hex dump"
+        default 272
+        depends on DONGLE_LOG_HCI_HEX
+
+    config DONGLE_STATS_PERIOD_MS
+        int "Statistics log period in ms (0 disables)"
+        default 5000
+
+endmenu
