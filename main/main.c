@@ -7,6 +7,7 @@
 #include "nvs_flash.h"
 #include "alog.h"
 #include "hci_usb_bridge.h"
+#include "status_led.h"
 #include "usb_bt_desc.h"
 
 static const char *TAG = "MAIN";
@@ -56,6 +57,7 @@ static void log_banner(void)
 void app_main(void)
 {
     alog_start();
+    status_led_start();
     esp_log_level_set("HCI", ESP_LOG_VERBOSE);
     esp_log_level_set("BRIDGE", ESP_LOG_VERBOSE);
     log_banner();

@@ -1,5 +1,16 @@
 menu "BLE USB Dongle"
 
+    config DONGLE_LED_GPIO
+        int "Status RGB LED (WS2812) GPIO"
+        default 48
+        help
+            DevKitC-1 v1.0 uses GPIO48, v1.1 uses GPIO38.
+
+    config DONGLE_LED_BRIGHTNESS
+        int "Blue level while a BLE device is connected (0-255)"
+        range 0 255
+        default 4
+
     config DONGLE_USB_VID
         hex "USB vendor ID"
         default 0x303A

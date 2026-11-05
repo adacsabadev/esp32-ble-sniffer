@@ -11,6 +11,9 @@
 #include "tusb.h"
 #include "device/usbd_pvt.h"
 #include "hci_log.h"
+#include "status_led.h"
+
+#define CONN_MAX 16
 #include "hci_usb_bridge.h"
 
 static const char *TAG = "BRIDGE";
@@ -89,6 +92,37 @@ static void usb_tx_kick(void)
     }
 }
 
+static uint16_t s_conn_handles[CONN_MAX];
+static unsigned s_conn_count;
+
+static void conn_publish(void)
+{
+    status_led_set_connections(s_conn_count);
+}
+
+static void conn_track_event(const uint8_t *e, uint16_t len)
+{
+    if (e[0] == 0x3E && len >= 8 && (e[2] == 0x01 || e[2] == 0x0A) && e[3] == 0x00) {
+        uint16_t h = (e[4] | (e[5] << 8)) & 0x0FFF;
+        if (s_conn_count < CONN_MAX) {
+            s_conn_handles[s_conn_count++] = h;
+        }
+    } else if (e[0] == 0x05 && len >= 5 && e[2] == 0x00) {
+        uint16_t h = (e[3] | (e[4] << 8)) & 0x0FFF;
+        for (unsigned i = 0; i < s_conn_count; i++) {
+            if (s_conn_handles[i] == h) {
+                s_conn_handles[i] = s_conn_handles[--s_conn_count];
+                break;
+            }
+        }
+    } else if (e[0] == 0x0E && len >= 6 && e[3] == 0x03 && e[4] == 0x0C && e[5] == 0x00) {
+        s_conn_count = 0; /* HCI Reset drops every connection */
+    } else {
+        return;
+    }
+    conn_publish();
+}
+
 static int vhci_host_recv(uint8_t *data, uint16_t len)
 {
     if (len < 1) {
@@ -100,9 +134,11 @@ static int vhci_host_recv(uint8_t *data, uint16_t len)
 
     if (type == H4_EVT) {
         STAT_INC(evt_rx);
+        conn_track_event(body, blen);
         hci_log_evt("C->H", body, blen);
     } else if (type == H4_ACL) {
         STAT_INC(acl_tx_rx);
+        status_led_activity();
         hci_log_acl("C->H", body, blen);
     } else {
         STAT_INC(c2h_unsupported);
@@ -334,6 +370,7 @@ void tud_bt_acl_data_received_cb(void *acl_data, uint16_t data_len)
 {
     const uint8_t *b = acl_data;
     ESP_LOGV(TAG, "USB ACL OUT chunk (%u bytes)", data_len);
+    status_led_activity();
 
     if (data_len == 0) {
         return; /* ZLP terminating a transfer whose size was a multiple of the packet size */

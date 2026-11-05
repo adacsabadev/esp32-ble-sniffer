@@ -16,6 +16,7 @@ ESP-IDF v6.1 firmware that turns an **ESP32-S3-DevKitC-1** into a USB Bluetooth 
   - every HCI command, event and ACL packet decoded by name (opcode, event, LE subevent, status, handle, flags),
   - raw hex dumps (verbose level),
   - queue, heap and drop statistics every 5 s.
+- **Status LED** (onboard WS2812): blue at level 4 while at least one BLE device is connected, off when none are; it blinks briefly on every BLE data (ACL) packet. GPIO (default 48; DevKitC-1 v1.1 boards use 38) and brightness are set in menuconfig. LED updates run in their own task, so they never delay the USB/BLE path.
 - **Asynchronous logging** (`alog.c`): log lines and HCI decodes are queued in a 24 KB ring buffer and printed by a low-priority task pinned to core 1, so UART output never blocks the USB/BLE path. If the ring fills, records are dropped and counted (`N log record(s) dropped`).
 
 ### Verified
