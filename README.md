@@ -38,6 +38,25 @@ ESP-IDF v6.1 firmware that turns an **ESP32-S3-DevKitC-1** into a USB Bluetooth 
 | Native USB (GPIO19/20) | Plug into the Windows host: this is the Bluetooth dongle |
 | UART0 (GPIO43/44) via FTDI adapter | Logs and flashing |
 
+## Quick flash (prebuilt firmware)
+
+[firmware/esp32s3_ble_usb_dongle_merged.bin](firmware/esp32s3_ble_usb_dongle_merged.bin) contains the bootloader, partition table and app in one image (flash at offset `0x0`). No ESP-IDF install is needed, only `esptool`:
+
+```powershell
+pip install esptool
+esptool --chip esp32s3 -p COM6 -b 460800 write-flash 0x0 firmware/esp32s3_ble_usb_dongle_merged.bin
+```
+
+Replace `COM6` with the UART/FTDI port. If auto-reset does not work, hold **BOOT**, tap **RESET**, release BOOT, then run the command (also works over the native USB port when the dongle firmware is not running). Press RESET afterwards if the board does not restart.
+
+Alternatively use the browser-based Espressif web flasher with the same file at address `0x0`.
+
+The prebuilt image is rebuilt from the current sources; see the commit history for its version. Rebuild it after code changes with:
+
+```powershell
+esptool --chip esp32s3 merge-bin -o firmware/esp32s3_ble_usb_dongle_merged.bin --flash-mode dio --flash-freq 80m --flash-size 8MB 0x0 build/bootloader/bootloader.bin 0x8000 build/partition_table/partition-table.bin 0x10000 build/esp32s3_ble_usb_dongle.bin
+```
+
 ## Build and flash
 
 ```powershell
